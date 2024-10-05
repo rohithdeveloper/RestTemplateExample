@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import com.example.employee.dto.AddressDto;
 import com.example.employee.dto.EmployeeDto;
 import com.example.employee.model.Address;
 import com.example.employee.model.Employee;
@@ -50,7 +51,7 @@ public class EmployeeServiceImpl implements EmployeeService {
 		if (employee.isPresent()) {
 			EmployeeDto empDto = UserMapper.mapToEmployeeDto(employee.get());
 			// http://localhost:8081/api/employee/252
-			ArrayList<Address> address = restTemplate
+			ArrayList<AddressDto> address = restTemplate
 					.getForObject("http://localhost:8081/api/employee/" + empDto.getEmpId(), ArrayList.class);
 			logger.info("{}", address);
 			empDto.setAddresses(address);

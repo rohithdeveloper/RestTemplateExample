@@ -3,8 +3,6 @@ package com.example.employee.dto;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.example.employee.model.Address;
-
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -20,7 +18,7 @@ public class EmployeeDto {
 	private String emailId;
 	private String branch;
 
-	private List<Address> addresses=new ArrayList<>();
+	private List<AddressDto> addresses=new ArrayList<>();
 
 	
 
