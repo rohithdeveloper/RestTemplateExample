@@ -11,6 +11,7 @@ public class UserMapper {
 
 	public static EmployeeDto mapToEmployeeDto(Employee employee) {
 
+		// Converts an Employee entity to an EmployeeDto
 		EmployeeDto empDto = new EmployeeDto();
 		empDto.setEmpId(employee.getEmpId());
 		empDto.setFirstName(employee.getFirstName());
@@ -22,6 +23,7 @@ public class UserMapper {
 	}
 
 	public static Employee mapToEmployee(EmployeeDto empDto) {
+		// Converts an EmployeeDto to an Employee entity
 		Employee emp = new Employee();
 		emp.setEmpId(empDto.getEmpId());
 		emp.setFirstName(empDto.getFirstName());

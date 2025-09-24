@@ -1,12 +1,16 @@
 package com.example.employee.serviceimpl;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatusCode;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -21,45 +25,63 @@ import com.example.employee.service.EmployeeService;
 @Service
 public class EmployeeServiceImpl implements EmployeeService {
 
-	@Autowired
-	private EmployeeRepository empRepo;
+    @Autowired
+    private EmployeeRepository empRepo;
 
-	@Autowired
-	private RestTemplate restTemplate;
+    @Autowired
+    private RestTemplate restTemplate;
 
-	private Logger logger = LoggerFactory.getLogger(EmployeeServiceImpl.class);
+    private Logger logger = LoggerFactory.getLogger(EmployeeServiceImpl.class);
 
-	@Override
-	public EmployeeDto createEmployee(EmployeeDto employeeDto) {
-		Employee employee = UserMapper.mapToEmployee(employeeDto);
-		Employee savedEmployee = empRepo.save(employee);
-		return UserMapper.mapToEmployeeDto(savedEmployee);
-	}
+    @Override
+    public EmployeeDto createEmployee(EmployeeDto employeeDto) {
+        Employee employee = UserMapper.mapToEmployee(employeeDto);
+        Employee savedEmployee = empRepo.save(employee);
+        return UserMapper.mapToEmployeeDto(savedEmployee);
+    }
 
-	@Override
-	public List<EmployeeDto> getAllEmployees() {
-		// TODO Auto-generated method stub
-		List<Employee> employees = empRepo.findAll();
-		List<EmployeeDto> employeesDto = UserMapper.mapToEmployeeDto(employees);
-		return employeesDto;
-	}
+    @Override
+    public List<EmployeeDto> getAllEmployees() {
+        // TODO Auto-generated method stub
+        List<Employee> employees = empRepo.findAll();
+        List<EmployeeDto> employeesDto = UserMapper.mapToEmployeeDto(employees);
+        return employeesDto;
+    }
 
-	@Override
-	public EmployeeDto getEmployeeById(long id) throws Exception {
-		// TODO Auto-generated method stub
-		Optional<Employee> employee = empRepo.findById(id);
-		if (employee.isPresent()) {
-			EmployeeDto empDto = UserMapper.mapToEmployeeDto(employee.get());
-			// http://localhost:8081/api/employee/252
-			ArrayList<AddressDto> address = restTemplate
-					.getForObject("http://localhost:8081/api/employee/" + empDto.getEmpId(), ArrayList.class);
-			logger.info("{}", address);
-			empDto.setAddresses(address);
-			return empDto;
-		} else {
-			throw new Exception("Employee not found");
-		}
+    @Override
+    public EmployeeDto getEmployeeById(long id) throws Exception {
+        // TODO Auto-generated method stub
+        Optional<Employee> employee = empRepo.findById(id);
+        if (employee.isPresent()) {
+            EmployeeDto empDto = UserMapper.mapToEmployeeDto(employee.get());
 
-	}
+//			getForObject(): Returns only the response body
+//			getForEntity(): Returns a ResponseEntity object containing the response body,
+//			HTTP status code, headers, and other metadata
+
+			// getForObject
+//            AddressDto[] addressArray = restTemplate
+//                    .getForObject("http://localhost:8081/api/employee/" + empDto.getEmpId(), AddressDto[].class);
+//            ArrayList<AddressDto> address = new ArrayList<>(Arrays.asList(addressArray));
+
+			// getForEntity
+			ResponseEntity<AddressDto[]> responseEntity = restTemplate
+					.getForEntity("http://localhost:8081/api/employee/" + empDto.getEmpId(), AddressDto[].class);
+			AddressDto[] addressArray = responseEntity.getBody();
+			HttpStatusCode status = responseEntity.getStatusCode();
+			logger.info("Response Status: {}", status);
+			HttpHeaders headers = responseEntity.getHeaders();
+			ArrayList<AddressDto> address = new ArrayList<>(Arrays.asList(addressArray));
+            // http://localhost:8081/api/employee/252
+//			ArrayList<AddressDto> address = restTemplate
+//					.getForObject("http://localhost:8081/api/employee/" + empDto.getEmpId(), ArrayList.class);
+            logger.info("{}", address);
+            empDto.setAddresses(address);
+            return empDto;
+        } else {
+            throw new Exception("Employee not found");
+        }
+
+    }
 
 }
