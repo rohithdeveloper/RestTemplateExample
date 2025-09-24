@@ -64,9 +64,9 @@ public class EmployeeServiceImpl implements EmployeeService {
 //                    .getForObject("http://localhost:8081/api/employee/" + empDto.getEmpId(), AddressDto[].class);
 //            ArrayList<AddressDto> address = new ArrayList<>(Arrays.asList(addressArray));
 
-			// getForEntity
+			// getForEntity - Using Eureka service name instead of direct URL
 			ResponseEntity<AddressDto[]> responseEntity = restTemplate
-					.getForEntity("http://localhost:8081/api/address/employee/" + empDto.getEmpId(), AddressDto[].class);
+					.getForEntity("http://Address-MicroService/api/address/employee/" + empDto.getEmpId(), AddressDto[].class);
 			AddressDto[] addressArray = responseEntity.getBody();
 			HttpStatusCode status = responseEntity.getStatusCode();
 			logger.info("Response Status: {}", status);

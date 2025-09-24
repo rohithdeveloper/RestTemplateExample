@@ -14,7 +14,7 @@ public class GatewayConfig {
 		return builder.routes()
 				.route("Employee-MicroService", r -> r
 						.path("/api/employee/**")
-						.uri("http://localhost:8082"))
+						.uri("lb://Employee-MicroService")) // Enable load balancing
 				.route("Address-MicroService", r -> r
 						.path("/api/**")
 //						.path("/api/address")
