@@ -12,13 +12,13 @@ public class GatewayConfig {
 	@Bean
 	public RouteLocator gatewayRoutes(RouteLocatorBuilder builder) {
 		return builder.routes()
-				.route("Address-MicroService", r -> r
-						.path("/api/address")
-//						.path("/api/address")
-						.uri("http://localhost:8081"))
 				.route("Employee-MicroService", r -> r
 						.path("/api/employee/**")
 						.uri("http://localhost:8082"))
+				.route("Address-MicroService", r -> r
+						.path("/api/**")
+//						.path("/api/address")
+						.uri("http://localhost:8081"))
 				.build();
 	}
 }

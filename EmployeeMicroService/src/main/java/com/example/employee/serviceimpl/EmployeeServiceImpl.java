@@ -66,7 +66,7 @@ public class EmployeeServiceImpl implements EmployeeService {
 
 			// getForEntity
 			ResponseEntity<AddressDto[]> responseEntity = restTemplate
-					.getForEntity("http://localhost:8081/api/employee/" + empDto.getEmpId(), AddressDto[].class);
+					.getForEntity("http://localhost:8081/api/address/employee/" + empDto.getEmpId(), AddressDto[].class);
 			AddressDto[] addressArray = responseEntity.getBody();
 			HttpStatusCode status = responseEntity.getStatusCode();
 			logger.info("Response Status: {}", status);

@@ -31,7 +31,7 @@ public class AddressController {
 		return addService.getAllAddresses();
 	}
 
-	@GetMapping("/employee/{empId}")
+	@GetMapping("/address/employee/{empId}")
 	public List<AddressDto> getAddressByEmployeeId(@PathVariable("empId") Long empId) throws Exception {
 		return addService.getAddressByEmployeeId(empId);
 	}
