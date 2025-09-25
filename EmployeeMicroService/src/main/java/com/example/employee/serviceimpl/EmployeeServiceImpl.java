@@ -5,8 +5,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.example.employee.exceptioncontroller.ServiceUnavailableException;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatusCode;
@@ -23,6 +24,7 @@ import com.example.employee.repository.EmployeeRepository;
 import com.example.employee.service.EmployeeService;
 
 @Service
+@Slf4j
 public class EmployeeServiceImpl implements EmployeeService {
 
     @Autowired
@@ -31,57 +33,78 @@ public class EmployeeServiceImpl implements EmployeeService {
     @Autowired
     private RestTemplate restTemplate;
 
-    private Logger logger = LoggerFactory.getLogger(EmployeeServiceImpl.class);
+    private static final String EMPLOYEE_SERVICE = "employeeService";
 
     @Override
     public EmployeeDto createEmployee(EmployeeDto employeeDto) {
+        log.info("Creating new employee: {}", employeeDto.getFirstName() + " " + employeeDto.getLastName());
         Employee employee = UserMapper.mapToEmployee(employeeDto);
         Employee savedEmployee = empRepo.save(employee);
+        log.info("Employee created successfully with ID: {}", savedEmployee.getEmpId());
         return UserMapper.mapToEmployeeDto(savedEmployee);
     }
 
     @Override
     public List<EmployeeDto> getAllEmployees() {
-        // TODO Auto-generated method stub
+        log.info("Fetching all employees");
         List<Employee> employees = empRepo.findAll();
         List<EmployeeDto> employeesDto = UserMapper.mapToEmployeeDto(employees);
+        log.info("Retrieved {} employees", employeesDto.size());
         return employeesDto;
     }
 
     @Override
+    @CircuitBreaker(name = EMPLOYEE_SERVICE, fallbackMethod = "getEmployeeByIdFallback")
     public EmployeeDto getEmployeeById(long id) throws Exception {
-        // TODO Auto-generated method stub
+        log.info("Fetching employee with ID: {}", id);
         Optional<Employee> employee = empRepo.findById(id);
         if (employee.isPresent()) {
             EmployeeDto empDto = UserMapper.mapToEmployeeDto(employee.get());
+            log.info("Employee found: {} {}", empDto.getFirstName(), empDto.getLastName());
 
-//			getForObject(): Returns only the response body
-//			getForEntity(): Returns a ResponseEntity object containing the response body,
-//			HTTP status code, headers, and other metadata
+            // Fetch addresses from Address Microservice using Eureka service discovery
+            // getForEntity(): Returns a ResponseEntity object containing the response body,
+            // HTTP status code, headers, and other metadata
+                ResponseEntity<AddressDto[]> responseEntity = restTemplate
+                        .getForEntity("http://Address-MicroService/api/address/employee/" + empDto.getEmpId(), AddressDto[].class);
+                AddressDto[] addressArray = responseEntity.getBody();
+                HttpStatusCode status = responseEntity.getStatusCode();
+                log.info("Address service response status: {}", status);
+                
+                // Handle null response body safely
+                ArrayList<AddressDto> address = new ArrayList<>();
+                if (addressArray != null) {
+                    address = new ArrayList<>(Arrays.asList(addressArray));
+                    log.info("Retrieved {} addresses for employee {}", address.size(), empDto.getEmpId());
+                } else {
+                    log.warn("No addresses found for employee {}", empDto.getEmpId());
+                }
+                
+                empDto.setAddresses(address);
+                return empDto;
 
-			// getForObject
-//            AddressDto[] addressArray = restTemplate
-//                    .getForObject("http://localhost:8081/api/employee/" + empDto.getEmpId(), AddressDto[].class);
-//            ArrayList<AddressDto> address = new ArrayList<>(Arrays.asList(addressArray));
-
-			// getForEntity - Using Eureka service name instead of direct URL
-			ResponseEntity<AddressDto[]> responseEntity = restTemplate
-					.getForEntity("http://Address-MicroService/api/address/employee/" + empDto.getEmpId(), AddressDto[].class);
-			AddressDto[] addressArray = responseEntity.getBody();
-			HttpStatusCode status = responseEntity.getStatusCode();
-			logger.info("Response Status: {}", status);
-			HttpHeaders headers = responseEntity.getHeaders();
-			ArrayList<AddressDto> address = new ArrayList<>(Arrays.asList(addressArray));
-            // http://localhost:8081/api/employee/252
-//			ArrayList<AddressDto> address = restTemplate
-//					.getForObject("http://localhost:8081/api/employee/" + empDto.getEmpId(), ArrayList.class);
-            logger.info("{}", address);
-            empDto.setAddresses(address);
-            return empDto;
         } else {
-            throw new Exception("Employee not found");
+            log.warn("Employee not found with ID: {}", id);
+            throw new Exception("Employee not found with ID: " + id);
         }
 
+    }
+
+//    public EmployeeDto getEmployeeByIdFallback(long id, Throwable ex) {
+//        log.warn("Circuit breaker fallback executed for employee ID: {}, cause: {}", id, ex.getMessage());
+//        EmployeeDto empDto = new EmployeeDto();
+//        empDto.setEmpId(id);
+//        empDto.setFirstName("Default");
+//        empDto.setLastName("Employee");
+//        empDto.setEmailId("default@example.com");
+//        empDto.setBranch("Default Branch");
+//        empDto.setAddresses(new ArrayList<>());
+//        log.info("Returning default employee data for ID: {}", id);
+//        return empDto;
+//    }
+
+    public EmployeeDto getEmployeeByIdFallback(long id, Throwable ex) {
+        throw new ServiceUnavailableException("Server problem, please try after sometime");
     }
 
 }

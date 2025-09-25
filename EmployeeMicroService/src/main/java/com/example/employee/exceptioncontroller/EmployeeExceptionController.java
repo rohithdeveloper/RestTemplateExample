@@ -24,10 +24,16 @@ import com.example.employee.model.ErrorDetails;
 public class EmployeeExceptionController extends ResponseEntityExceptionHandler {
 
 	@ExceptionHandler(Exception.class)
-	public ResponseEntity<ErrorDetails> handleGlobalException(Exception exception,WebRequest webRequest){
-		ErrorDetails errorDetails = new ErrorDetails(new Date(),exception.getMessage(),webRequest.getDescription(false));
-		return new ResponseEntity<>(errorDetails,HttpStatus.INTERNAL_SERVER_ERROR);
-		}
+	public ResponseEntity<ErrorDetails> handleGlobalException(Exception exception,WebRequest webRequest) {
+		ErrorDetails errorDetails = new ErrorDetails(new Date(), exception.getMessage(), webRequest.getDescription(false));
+		return new ResponseEntity<>(errorDetails, HttpStatus.INTERNAL_SERVER_ERROR);
+	}
+
+	@ExceptionHandler(ServiceUnavailableException.class)
+	public ResponseEntity<ErrorDetails> handleServiceUnavailableException(ServiceUnavailableException exception,WebRequest webRequest) {
+		ErrorDetails errorDetails = new ErrorDetails(new Date(), exception.getMessage(), webRequest.getDescription(false));
+		return new ResponseEntity<>(errorDetails, HttpStatus.SERVICE_UNAVAILABLE);
+	}
 
 	@Override
 	protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex,
